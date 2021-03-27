@@ -1,0 +1,29 @@
+const mongoose = require('mongoose')
+const base = require('./base')
+
+// 定义用户数据模型
+const articleSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  bio: {
+    type: String,
+    default: null,
+  },
+  image: {
+    type: String,
+    default: null,
+  },
+  ...base,
+})
+
+module.exports = articleSchema
