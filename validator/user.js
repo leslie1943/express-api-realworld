@@ -2,7 +2,9 @@ const { body } = require('express-validator')
 
 const { User } = require('../model')
 const validate = require('../middleware/validator')
+const md5 = require('../util/md5')
 
+// 用户注册校验
 exports.register = validate(
   // 👮‍♂️ 1. 中间件: 配置验证规则
   [
@@ -35,3 +37,35 @@ exports.register = validate(
       }),
   ]
 )
+
+// 用户登录校验
+exports.login = [
+  validate([
+    body('user.email').notEmpty().withMessage('邮箱不能为空'),
+    body('user.password').notEmpty().withMessage('密码不能为空'),
+  ]),
+  validate([
+    body('user.email').custom(async (email, { req }) => {
+      // 需要手动查询出来 password 字段, 因为在model模块配置了 select: false
+      const user = await User.findOne({ email }).select([
+        'email',
+        'username',
+        'bio',
+        'image',
+        'password',
+      ])
+      if (!user) {
+        return Promise.reject('用户不存在')
+      }
+      // 将数据挂载到请求对象上, 后续的中间件可以使用
+      req.user = user
+    }),
+  ]),
+  validate([
+    body('user.password').custom(async (password, { req }) => {
+      if (md5(password) !== req.user.password) {
+        return Promise.reject('密码错误!')
+      }
+    }),
+  ]),
+]

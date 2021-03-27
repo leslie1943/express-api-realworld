@@ -214,3 +214,91 @@ router.put('/user', userContrl.updateCurrentUser)
 module.exports = router
 
 ```
+
+### JWT
+- JSON Wen Token:最流行的跨域认证解决方案
+- 互联网服务离不开用户认证, 一般流程是这样的
+1. 用户向服务器发送用户名和密码
+2. 服务器验证通过后, 在当前对话(`session`)里面保存相关数据, 比如用户角色, 登录时间等等
+3. 服务器向用户返回一个 `session_id`, 写入用户的 `Cookie`
+4. 随后用户的每一次请求, 都会通过 `Cookie`, 将`session_id`传回服务器
+5. 服务器收到`session_id`后,找到前期保存的数据, 由此得知用户的身份
+
+- 服务器认证后, 生成一个JSON对象, 发回给用户
+```json
+{
+  "name": "suzhen",
+  "role": "administrator",
+  "expired": "2099-12-31"
+}
+```
+- `JWT`的三个部分
+- `Header.Payload.Signature`
+1. Header: 头部: JSON 对象, 描述 JWT的元数据
+```json
+{
+  "alg": "HS256", // 签名算法
+  "typ": "JWT" // 类型:
+}
+// base64转换
+```
+2. Payload: 负载
+```json
+{
+  // 官方字段
+  "iss": "签发人",
+  "exp": "过期时间", 
+  "sub": "主题", 
+  "adu": "受众", 
+  "nbf": "生效时间", // not before 
+  "iat": "签发时间", // issue at
+  "jti": "JWT id", // 编号
+
+  // 私有字段
+  "sub": "123456",
+  "name": "Leslie",
+  "admin": true
+}
+// JWT 默认不加密,不要把敏感信息放在这个部分
+// 这个JSON对象也使用 BASE64URL 算法转成字符串
+```
+3. Signature: 签名
+- 前面个属性生成的密钥,保证前面2个数据不被篡改, 签名是在服务端生成的, 不能伪造
+1. 首先指定一个密钥(secret). 这个密钥只有服务器知道, 不能泄露给用户,然后使用Header里面的指定的签名算法(HMAC SHA256),按照下列公式生成签名
+```bash
+  HAMCSHA256(
+    base64UrlEncode(header) + '.' + 
+    base64UrlEncode(payload),
+    secret
+  )
+```
+- 算出签名后,把 Header.Payload.Signature 三个部分拼成一个字符串, 每个部分用`.`分割, 就可以返回给用户了
+- `JWT中, 消息体是透明的, 使用签名可以保证消息不被篡改,但不能实现数据的加密功能`, 只是编码,不是加密
+
+
+### Base64Url
+- Base64会生成`+`,`=` 不方便在URL传递
+
+
+### JWT的使用方式
+- 客户端收到服务器返回的JWT, 可以存储在Cookie里面, 也可以存储在 localStorage
+- 此后,客户端每次与服务器通信, 都要携带这个JWT. 可以把它放在 Cookie里面自动发送, 但是这样不能跨域, 随意更好的做法是放在`HTTP`请求的头信息 `Authorization`字段里面
+```
+Authorization: Bearer <token>
+```
+- 另一种做法是, 跨域的时候, JWT就放在 POST 请求的数据体里面
+
+### JWT的特点
+1. `JWT`默认是不加密的, 但也可以是加密的. 生成原始token后,可以用密钥再加密一次
+2. `JWT`不加密的情况下, 不能将秘密数据写入`JWT`
+3. `JWT`不仅可以用于认证, 也可以用于交换信息. 有效使用 `JWT`, 可以降低服务器查询数据库的次数
+4. `JWT`的最大缺点是, 由于服务器不保存 `session` 状态, 因此无法再使用过程中废止某个token, 或者更改 `token` 的权限. 也就是说 一旦`JWT`签发了,在到期之前就会始终有效, 除非服务器部署额外的逻辑
+5. `JWT`本身包含了认证信息, 一旦泄露, 任何人都可以获得该令牌的所有权限. 为了防止盗用, `JWT`的有效期应该设置的比较短. 对于一些比较重要的权限, 使用时应该再次对用户进行认证
+6. 为了防止盗用, `JWT`不应该使用 `HTTP` 协议明码传输, 需要使用 `HTTPS` 协议传输.
+
+### JWT 的解决方案
+- https://jwt.io
+
+### Node.js中使用JWT
+- npm install jsonwebtoken
+- 
