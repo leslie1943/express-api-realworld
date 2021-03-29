@@ -14,7 +14,8 @@ exports.login = async (req, res, next) => {
       {
         userId: user._id,
       },
-      jwtSecret
+      jwtSecret,
+      { expiresIn: 60 * 60 * 24 } // 过期时间
     )
 
     res.status(200).json({ ...user, token })
