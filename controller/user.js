@@ -1,13 +1,23 @@
+const { jwtSecret } = require('../config/config.default')
+const jwt = require('../util/jwt')
 const { User } = require('../model')
 
 // 用户登录
 exports.login = async (req, res, next) => {
   try {
-    // 数据获取和验证: 在router上挂载中间件(validator中)
-    let user = req.user.toJSON()
+    // 1.数据获取和验证: 在router上挂载中间件(validator中)
+    let user = req.user.toJSON() // 无法删除 req.user的属性操作, 需要 toJSON后才行
     // 删除密码属性
     delete user.password
-    res.status(200).json({ user })
+    // 2. 生成token
+    const token = await jwt.sign(
+      {
+        userId: user._id,
+      },
+      jwtSecret
+    )
+
+    res.status(200).json({ ...user, token })
   } catch (err) {
     next(err)
   }
@@ -35,7 +45,8 @@ exports.register = async (req, res, next) => {
 // 获取当前登录用户
 exports.getCurrentUser = async (req, res, next) => {
   try {
-    res.send('get getCurrentUser')
+    // 在 auth 中间件中,处理了 user
+    res.status(200).json({ user: req.user })
   } catch (err) {
     next(err)
   }

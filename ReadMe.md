@@ -212,7 +212,6 @@ router.get('/user', userContrl.getCurrentUser)
 router.put('/user', userContrl.updateCurrentUser)
 
 module.exports = router
-
 ```
 
 ### JWT
@@ -301,4 +300,18 @@ Authorization: Bearer <token>
 
 ### Node.js中使用JWT
 - npm install jsonwebtoken
-- 
+```js
+const jwt = require('jsonwebtoken')
+const { promisify } = require('util')
+exports.sign = promisify(jwt.sign)
+exports.verify = promisify(jwt.verify)
+exports.decode = promisify(jwt.decode)
+```
+
+
+### JWT 使用过程
+1. `util`中封装`jwt.js`,导出`sign`和`verify`方法, 分别对应加密和解密的方法
+2. 登录的时候, `controller/user.js`中, 将`token`和`用户信息`一同返回
+3. 返回后的信息被存放在客户端本地, 在后续的请求中携带过来.
+4. 封装`middleware/auth.js`中间件, 并将其配置在需要身份认证的请求中.
+5. 获取请求头带回来的`token`,然后对`token`解码, 解码后查询到对应的用户信息, 并挂载到`req`上下文中. 一共后续的其他地方使用,如: `controller`
