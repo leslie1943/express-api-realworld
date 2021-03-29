@@ -28,7 +28,7 @@ exports.getArticle = async (req, res, next) => {
 // 创建 单个 Article
 exports.createArticle = async (req, res, next) => {
   try {
-    res.send('createArticle')
+    res.send('createArticle with auth')
   } catch (err) {
     next(err)
   }
